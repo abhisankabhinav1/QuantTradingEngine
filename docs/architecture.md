@@ -1,5 +1,7 @@
-# Data and execution contract
+# Architecture and build boundaries
 
-Signals generated after bar *t* are queued and filled at the open of bar *t+1*. This is the central look-ahead protection. OHLC validation rejects non-finite values, non-positive prices, invalid high/low relationships, negative volume, duplicate timestamps, and out-of-order data.
+The API is intentionally split into data, indicators, strategy, execution, portfolio, risk, backtest, and performance namespaces. `src/engine.cpp` is currently the library's portable implementation boundary so that consumers build one small static target; the empty domain source files identify the seams for a future translation-unit split without changing the public API.
 
-The portfolio uses signed quantity, average entry price, cash accounting, commission, directional slippage, and a ledger. The current single-asset backtester limits notional using `maxPositionFraction`; independent multi-asset pairs are represented by `PairsTradingStrategy`, while a future portfolio release should execute both legs atomically.
+The stateful components are deliberately ordered: a strategy creates a signal, risk approves a proposed notional, execution creates a fill, and the portfolio applies that fill. The backtester is single-threaded because cash and positions are mutable state. Independent strategy runs can be parallelized, but fills on one portfolio cannot be concurrently mutated without a defined event-ordering model.
+
+Configure with `QTE_ENABLE_SANITIZERS=ON` during development. Build warnings are enabled for GCC and Clang.

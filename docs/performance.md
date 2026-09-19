@@ -1,5 +1,3 @@
-# Performance and benchmarks
+# Benchmarking
 
-Trading metrics include total return, CAGR, annualized volatility, Sharpe, Sortino, maximum drawdown, Calmar, win rate, profit factor, trade count, fees, and slippage. A zero denominator produces a neutral metric rather than infinity.
-
-`qte_benchmark` measures indicator throughput with `std::chrono`, reports rows/second, and prints a checksum to prevent dead-code elimination. Repeat it for 10k, 100k, 1m, and 10m rows and record compiler, CPU, optimization flags, wall time, and memory separately. These are software measurements, not trading performance.
+The benchmark is a reproducible throughput harness rather than a trading claim. It measures indicator pipeline wall time for four data sizes and writes `rows,seconds,rows_per_second,checksum` to CSV plus equivalent JSON. Run it on an otherwise idle machine and publish compiler, flags, CPU, operating system, and memory details with any result.
