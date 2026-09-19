@@ -1,3 +1,5 @@
 # Strategies
 
-Momentum compares fast and slow simple moving averages. Mean reversion computes a rolling z-score and trades only when it exceeds a configurable threshold. Both use only bars at or before the signal bar; orders execute on the next bar's open. Pairs trading is not included in this first build because a correct multi-asset data model and hedge-ratio estimation should be added rather than represented by a misleading stub.
+Momentum compares fast and slow rolling SMAs. Mean reversion trades a rolling close z-score. Pairs trading computes `spread = asset_a - hedge_ratio * asset_b`, then standardizes it over a rolling window. A negative z-score indicates a long-spread signal and a positive score indicates a short-spread signal. Hedge ratio is configurable and should be estimated only from training data in serious research.
+
+All strategies are signal generators, not profit claims. Parameters should be selected on training data and evaluated out of sample.

@@ -1,51 +1,60 @@
 # QuantTradingEngine
 
-A C++20 quantitative research and bar-by-bar backtesting engine with Python analysis tools. This is an educational engineering project: results are experimental backtests, not investment advice or evidence of future profitability.
+QuantTradingEngine is a C++20 educational quantitative research and backtesting system with Python analysis. It is designed to make data structures, numerical methods, execution assumptions, risk controls, testing, and performance engineering visible in a portfolio project. It does not claim alpha, profitability, or institutional realism.
 
-## Features
-
-- Validated OHLCV market data and CSV loading
-- O(n) rolling SMA, EMA, RSI, returns, and volatility indicators
-- Momentum and mean-reversion strategies with no look-ahead execution
-- Configurable commission and slippage
-- Cash, positions, trade ledger, exposure, and equity curve
-- Return, CAGR, volatility, Sharpe, Sortino, drawdown, win-rate, and profit-factor metrics
-- CMake build, optional GoogleTest tests, and Python plotting/reporting scripts
-
-## Architecture
+## Repository layout
 
 ```text
-CSV -> DataLoader/Validator -> Indicators -> Strategy -> Risk -> Execution
-                                      -> Portfolio -> Performance -> Report
+include/{data,indicators,strategy,execution,portfolio,risk,backtest,performance}
+src/{data,indicators,strategy,execution,portfolio,risk,backtest,performance}/
+tests/  python/  benchmarks/  docs/  data/sample/  results/
 ```
 
-A signal computed from bar *t* is queued and executed at the open of bar *t+1*. This deliberate one-bar delay prevents using information that was unavailable at decision time.
+The public API is organized by domain. The current implementation keeps the library build simple in one translation unit while exposing separable headers; the next refactoring step is to move each domain implementation into its matching `src/` directory.
 
-## Build and run
+## Build
 
 ```bash
-sudo apt install cmake g++ libgtest-dev python3-pip
-cmake -S . -B build -DQTE_BUILD_TESTS=ON
+cmake -S . -B build -DQTE_BUILD_TESTS=ON -DQTE_BUILD_BENCHMARKS=ON
 cmake --build build -j
-./build/qte_demo
 ctest --test-dir build --output-on-failure
+./build/qte_demo
+./build/qte_benchmark
 ```
 
-The demo creates a deterministic synthetic series and writes `results/equity.csv` and `results/summary.csv`. For real research, prepare a CSV with columns `timestamp,open,high,low,close,volume` and replace the demo data only after validating its provenance.
+GoogleTest is optional at configure time. Install it through the platform package manager or use a FetchContent policy suitable for your environment.
+
+## Data contract
+
+CSV format is `timestamp,open,high,low,close,volume`. Timestamps must be strictly increasing. Prices must be finite and positive; high must be at least open and close; low must be at most open and close; volume cannot be negative. Invalid data fails loudly.
+
+## Research model
+
+The engine uses bar-close signals and next-bar-open fills. Buys pay positive slippage, sells receive a lower execution price, and commissions are proportional to notional. The portfolio tracks cash, signed positions, average price, realized P&L, and a trade ledger. `maxPositionFraction` and drawdown/exposure gates prevent unbounded simulated positions.
+
+## Indicators and complexity
+
+SMA uses a rolling sum: O(n) time and O(n) output space. EMA is O(n) with a seeded SMA. RSI uses Wilder-style smoothed average gains/losses in O(n). Volatility uses sample standard deviation of rolling simple returns and annualizes by sqrt(252). NaN warm-up values are intentional and prevent pretending an indicator exists before enough observations.
+
+## Strategies
+
+- Momentum: fast SMA versus slow SMA.
+- Mean reversion: configurable rolling z-score threshold.
+- Pairs: spread and hedge-ratio z-score over two synchronized series. It is a signal component; atomic two-leg execution is a planned extension.
 
 ## Python analysis
 
 ```bash
-pip install -r python/requirements.txt
+python3 -m pip install -r python/requirements.txt
 python3 python/analyze_results.py results/equity.csv
 ```
 
-## Mathematics
+The script saves equity and drawdown plots in `results/plots/` and does not manufacture performance numbers.
 
-SMA is the rolling arithmetic mean. EMA uses `EMA_t = alpha*x_t + (1-alpha)*EMA_(t-1)`, where `alpha=2/(N+1)`. Returns are `P_t/P_(t-1)-1`; annualized volatility is the standard deviation of returns times `sqrt(252)`. Sharpe is annualized mean excess return divided by annualized volatility. Drawdown is equity divided by its previous running peak minus one.
+## Limitations and responsible interpretation
 
-## Limitations and roadmap
+This is not live trading software. It omits market impact, order-book liquidity, partial fills, corporate actions, calendar alignment, borrow costs, financing, survivorship bias controls, and robust walk-forward evaluation. Historical backtests are sensitive to data quality, costs, parameter overfitting, and regime changes. Label all outputs **Backtest / Experimental Results** and never infer future returns from them.
 
-This engine uses bar data, simplified market orders, fixed proportional costs, no market impact, and single-asset examples. It does not model order-book liquidity, corporate actions, survivorship bias, regime changes, or live trading. Future work includes multi-asset portfolios, event-driven execution, limit-order books, walk-forward validation, parallel strategy evaluation, and profiling.
+## Roadmap
 
-See `docs/` for design notes. Never treat a historical backtest as a guarantee of returns.
+Split the implementation into domain translation units; add multi-symbol synchronized data; implement atomic pairs execution; add stop-loss and volatility targeting to the backtester; add JSON configuration; add walk-forward validation; add memory benchmarks and optional parallel independent strategy runs; then consider an event-driven engine and limit-order book.

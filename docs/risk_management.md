@@ -1,3 +1,3 @@
 # Risk management
 
-The initial engine enforces a maximum position fraction and transaction costs. A production research extension should add volatility targeting, hard position limits, stop losses, portfolio-level exposure, and drawdown gates as explicit components. Risk rules must be tested independently from signal generation and must fail closed when data is missing or invalid.
+The risk layer provides a maximum exposure gate, maximum drawdown gate, stop-loss helper, and volatility-targeted sizing formula. Risk checks are applied before simulated orders. Production extensions should make position limits symbol-aware, reserve cash for fees, support atomic multi-leg pairs orders, and test behavior during gaps and missing data.

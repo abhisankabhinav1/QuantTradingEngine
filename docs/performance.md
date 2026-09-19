@@ -1,3 +1,5 @@
-# Performance
+# Performance and benchmarks
 
-Trading metrics describe a simulated portfolio; software benchmarks should measure rows/second separately. The current output includes an equity CSV and summary CSV. Do not compare strategies without identical data, costs, calendars, and parameter-selection procedures. Add walk-forward and out-of-sample evaluation before drawing research conclusions.
+Trading metrics include total return, CAGR, annualized volatility, Sharpe, Sortino, maximum drawdown, Calmar, win rate, profit factor, trade count, fees, and slippage. A zero denominator produces a neutral metric rather than infinity.
+
+`qte_benchmark` measures indicator throughput with `std::chrono`, reports rows/second, and prints a checksum to prevent dead-code elimination. Repeat it for 10k, 100k, 1m, and 10m rows and record compiler, CPU, optimization flags, wall time, and memory separately. These are software measurements, not trading performance.

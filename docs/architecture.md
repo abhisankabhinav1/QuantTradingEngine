@@ -1,5 +1,5 @@
-# Architecture
+# Data and execution contract
 
-The library separates data validation, pure indicator functions, strategy decisions, execution simulation, and performance analysis. Most indicator routines use contiguous `std::vector<double>` storage. Rolling SMA is O(n) time and O(n) output space; EMA and RSI are O(n); the simple demo strategy currently recomputes indicator vectors per signal and is intentionally readable, making it a candidate for future caching optimization.
+Signals generated after bar *t* are queued and filled at the open of bar *t+1*. This is the central look-ahead protection. OHLC validation rejects non-finite values, non-positive prices, invalid high/low relationships, negative volume, duplicate timestamps, and out-of-order data.
 
-The backtester is deliberately single-threaded because cash and positions are stateful. Independent strategy runs can be parallelized later, but shared portfolio mutation must remain synchronized or serialized.
+The portfolio uses signed quantity, average entry price, cash accounting, commission, directional slippage, and a ledger. The current single-asset backtester limits notional using `maxPositionFraction`; independent multi-asset pairs are represented by `PairsTradingStrategy`, while a future portfolio release should execute both legs atomically.
